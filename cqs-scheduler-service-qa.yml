@@ -1,0 +1,181 @@
+server:
+  port: 8085
+  ssl:
+    key-store: ${APP_GENERATED_FILES_LOCATION:ssl}/scheduler.p12
+    key-store-password: ${KEY_STORE_PASSWORD:password}
+    key-alias: ${KEY_STORE_ALIAS:cqs-scheduler}
+    key-password: ${KEY_STORE_PASSWORD:password}
+    key-store-type: PKCS12
+    #if enabling change Scheduler Service url to https
+    enabled: false
+    trust-store: ${APP_GENERATED_FILES_LOCATION:ssl}/truststore.jks
+    trust-store-password: ${KEY_STORE_PASSWORD:password}
+    trust-store-type: JKS
+    client-auth: need
+
+user:
+  username: Hola
+
+car:
+  brand: AUDI
+mtls:
+  #if enabling do not forget to change external service urls to https
+  certificateMountLocation: ${CERTIFICATE_MOUNT_LOCATION:autocert}
+  serviceCertificateName: ${SERVICE_CERTIFICATE_NAME:site.crt}
+  certificateInvalidateHours: ${CERTIFICATE_INVALIDATE_HOURS:10}
+  certificateInvalidateCheckCron: ${CERTIFICATE_INVALIDATE_CHECK_CRON:*/5 * * ? * *}
+  rootCertificateName: ${ROOT_CERTIFICATE_NAME:root.crt}
+  servicePemKeyName: ${SERVICE_PEM_KEY_NAME:pkcs8.pem}
+  appGeneratedFilesLocation: ${APP_GENERATED_FILES_LOCATION:ssl}
+  validCommonNames:
+    - ${CQS_AGW_CN:cqs-api-gateway-service}
+
+management:
+  endpoints:
+    web.exposure.include: "*"
+
+logging:
+  level:
+    com.teladoc.cqs: debug
+
+spring:
+  datasource:
+    driverclassname: org.postgresql.Driver
+    url: ${CQS_SCHEDULER_DB_URL:jdbc:postgresql://localhost:5436/scheduler}
+    username: ${CQS_SCHEDULER_DB_USERNAME:scheduler_user}
+    password: ${CQS_SCHEDULER_DB_PASSWORD:scheduler_pass}
+
+  quartz:
+    properties:
+      org.quartz.threadPool.threadCount: ${SCHEDULER_POOL_SIZE:5}
+    overwrite-existing-jobs: true
+
+  output:
+    ansi:
+      enabled: ALWAYS
+
+#For dev usage values are setUp in bootRunDev gradle task.
+#external-services:
+#  urls:
+#    - ${CQS_RAS_SERVICE_URL:http://localhost:8084}
+#    - ${CQS_WAITING_ROOM_SERVICE_URL:http://localhost:8082}
+#    - ${CQS_MATCHING_SERVICE_URL:http://localhost:8083}
+
+scheduler:
+  jobs:
+    outboxCleanup:
+      ras:
+        request:
+          cron: ${RAS_REQUEST_OUTBOX_EVENTS_CHECK_CRON:0/5 * * ? * * *}
+          retryNumber: ${RAS_REQUEST_OUTBOX_EVENTS_CHECK_RETRY_NUM:1}
+          retryDelay: ${RAS_REQUEST_OUTBOX_EVENTS_CHECK_RETRY_DELAY:60}
+          enabled: ${RAS_REQUEST_OUTBOX_EVENTS_CHECK_ENABLED:false}
+          timeout: ${RAS_REQUEST_OUTBOX_EVENTS_CHECK_TIMEOUT_MIN:1}
+        provider:
+          cron: ${RAS_PROVIDER_OUTBOX_EVENTS_CHECK_CRON:0/5 * * ? * * *}
+          retryNumber: ${RAS_PROVIDER_OUTBOX_EVENTS_CHECK_RETRY_NUM:1}
+          retryDelay: ${RAS_PROVIDER_OUTBOX_EVENTS_CHECK_RETRY_DELAY:60}
+          enabled: ${RAS_PROVIDER_OUTBOX_EVENTS_CHECK_ENABLED:false}
+          timeout: ${RAS_PROVIDER_OUTBOX_EVENTS_CHECK_TIMEOUT_MIN:1}
+      match-result:
+        cron: ${WRS_MATCH_RESULT_OUTBOX_EVENTS_CHECK_CRON:0/5 * * ? * * *}
+        retryNumber: ${WRS_MATCH_RESULT_OUTBOX_EVENTS_CHECK_RETRY_NUM:1}
+        retryDelay: ${WRS_MATCH_RESULT_OUTBOX_EVENTS_CHECK_RETRY_DELAY:60}
+        enabled: ${WRS_MATCH_RESULT_OUTBOX_EVENTS_CHECK_ENABLED:false}
+        timeout: ${WRS_MATCH_RESULT_OUTBOX_EVENTS_CHECK_TIMEOUT_MIN:1}
+      generic:
+        cron: ${WRS_GENERIC_OUTBOX_EVENTS_CHECK_CRON:0/5 * * ? * * *}
+        retryNumber: ${WRS_GENERIC_OUTBOX_EVENTS_CHECK_RETRY_NUM:1}
+        retryDelay: ${WRS_GENERIC_OUTBOX_EVENTS_CHECK_RETRY_DELAY:60}
+        enabled: ${WRS_GENERIC_OUTBOX_EVENTS_CHECK_ENABLED:false}
+        timeout: ${WRS_GENERIC_OUTBOX_EVENTS_CHECK_TIMEOUT_MIN:1}
+    requestsCleanup:
+      cron: ${REQUESTS_CLEANUP_CRON:0/5 * * ? * * *}
+      retryNumber: ${REQUESTS_CLEANUP_RETRY_NUM:1}
+      retryDelay: ${REQUESTS_CLEANUP_RETRY_DELAY:60}
+      enabled: ${REQUESTS_CLEANUP_ENABLED:false}
+      timeout: ${REQUESTS_CLEANUP_TIMEOUT_MIN:1}
+    providersCleanup:
+      cron: ${PROVIDERS_CLEANUP_CRON:0/5 * * ? * * *}
+      retryNumber: ${PROVIDERS_CLEANUP_RETRY_NUM:1}
+      retryDelay: ${PROVIDERS_CLEANUP_RETRY_DELAY:60}
+      enabled: ${PROVIDERS_CLEANUP_ENABLED:false}
+      timeout: ${PROVIDERS_CLEANUP_TIMEOUT_MIN:1}
+    matchIterationStart:
+      cron: ${MATCH_ITERATION_START_CRON:0/30 * * ? * * *}
+      retryNumber: ${MATCH_ITERATION_START_RETRY_NUM:1}
+      retryDelay: ${MATCH_ITERATION_START_RETRY_DELAY:60}
+      enabled: ${MATCH_ITERATION_START_ENABLED:false}
+      timeout: ${MATCH_ITERATION_START_TIMEOUT_MIN:1}
+    licenceActualization:
+      cron: ${LICENCE_ACTUALIZATION_CRON:0 0 0 ? * * *}
+      retryNumber: ${LICENCE_ACTUALIZATION_RETRY_NUM:1}
+      retryDelay: ${LICENCE_ACTUALIZATION_RETRY_DELAY:60}
+      enabled: ${LICENCE_ACTUALIZATION_ENABLED:false}
+      timeout: ${LICENCE_ACTUALIZATION_TIMEOUT_MIN:1}
+    emptyWaitingRoomsCleanup:
+      cron: ${WAITING_ROOM_CLEANUP_CRON:0 0 2 ? * * *}
+      retryNumber: ${WAITING_ROOM_CLEANUP_RETRY_NUM:1}
+      retryDelay: ${WAITING_ROOM_CLEANUP_RETRY_DELAY:60}
+      enabled: ${WAITING_ROOM_CLEANUP_ENABLED:false}
+      timeout: ${WAITING_ROOM_CLEANUP_TIMEOUT_MIN:1}
+    reservationsResolve:
+      cron: ${RAS_EXPIRED_RESERVATIONS_RESOLVE_CRON:0 0/5 * ? * * *}
+      retryNumber: ${RAS_EXPIRED_RESERVATIONS_RESOLVE_RETRY_NUM:1}
+      retryDelay: ${RAS_EXPIRED_RESERVATIONS_RESOLVE_RETRY_DELAY:60}
+      enabled: ${RAS_EXPIRED_RESERVATIONS_RESOLVE_ENABLED:false}
+      timeout: ${RAS_EXPIRED_RESERVATIONS_RESOLVE_TIMEOUT_MIN:1}
+    duplicatedProvidersCleanup:
+      cron: 0 0 5 ? * * *
+      retryNumber: 1
+      retryDelay: 60
+      enabled: false
+      timeout: 1
+    staleProviderAvailable:
+      cron: ${RAS_MARK_STALE_AVAILABLE_PROVIDERS_UNAVAILABLE_CRON:0 0 * ? * * *}
+      retryNumber: ${RAS_STALE_MARK_AVAILABLE_PROVIDERS_UNAVAILABLE_RETRY_NUM:1}
+      retryDelay: ${RAS_STALE_MARK_AVAILABLE_PROVIDERS_UNAVAILABLE_DELAY:60}
+      enabled: ${RAS_MARK_STALE_AVAILABLE_PROVIDERS_UNAVAILABLE_ENABLED:false}
+      timeout: ${RAS_MARK_STALE_AVAILABLE_PROVIDERS_UNAVAILABLE_TIMEOUT_MIN:1}
+    staleProviderBusy:
+      cron: ${RAS_MARK_STALE_BUSY_PROVIDERS_UNAVAILABLE_CRON:0 0/10 * ? * * *}
+      retryNumber: ${RAS_STALE_MARK_BUSY_PROVIDERS_UNAVAILABLE_RETRY_NUM:1}
+      retryDelay: ${RAS_MARK_STALE_BUSY_PROVIDERS_UNAVAILABLE_RETRY_DELAY:60}
+      enabled: ${RAS_MARK_STALE_BUSY_PROVIDERS_UNAVAILABLE_ENABLED:false}
+      timeout: ${RAS_MARK_STALE_BUSY_PROVIDERS_UNAVAILABLE_TIMEOUT_MIN:1}
+    tpnSpillover:
+      cron: ${WRS_TPN_SPILLOVER_CRON:0 0/2 * ? * * *}
+      retryNumber: ${WRS_TPN_SPILLOVER_RETRY_NUM:1}
+      retryDelay: ${WRS_TPN_SPILLOVER_RETRY_DELAY:60}
+      enabled: ${WRS_TPN_SPILLOVER_ENABLED:true}
+      timeout: ${WRS_TPN_SPILLOVER_TIMEOUT_MIN:1}
+    providerScheduledEvents:
+      cron: ${WRS_PROVIDER_SCHEDULED_EVENTS_CRON:2 0/15 * ? * * *}
+      retryNumber: ${WRS_PROVIDER_SCHEDULED_EVENTS_RETRY_NUM:1}
+      retryDelay: ${WRS_PROVIDER_SCHEDULED_EVENTS_RETRY_DELAY:60}
+      enabled: ${WRS_PROVIDER_SCHEDULED_EVENTS_ENABLED:true}
+      timeout: ${WRS_PROVIDER_SCHEDULED_EVENTS_TIMEOUT_MIN:1}
+    computeCurrentKpis:
+      cron: ${ANALYTICS_COMPUTE_CURRENT_KPIS_CRON:0 0/1 * ? * * *}
+      retryNumber: ${ANALYTICS_COMPUTE_CURRENT_KPIS_RETRY_NUM:1}
+      retryDelay: ${ANALYTICS_COMPUTE_CURRENT_KPIS_RETRY_DELAY:60}
+      enabled: ${ANALYTICS_COMPUTE_CURRENT_KPIS_ENABLED:false}
+      timeout: ${ANALYTICS_COMPUTE_CURRENT_KPIS_TIMEOUT_MIN:1}
+    computeTrailingKpis:
+      cron: ${ANALYTICS_COMPUTE_TRAILING_KPIS_CRON:0 0/1 * ? * * *}
+      retryNumber: ${ANALYTICS_COMPUTE_TRAILING_KPIS_RETRY_NUM:1}
+      retryDelay: ${ANALYTICS_COMPUTE_TRAILING_KPIS_RETRY_DELAY:60}
+      enabled: ${ANALYTICS_COMPUTE_TRAILING_KPIS_ENABLED:false}
+      timeout: ${ANALYTICS_COMPUTE_TRAILING_KPIS_TIMEOUT_MIN:1}
+    conditionalAnalyticsCleanup:
+      cron: ${CONDITIONAL_ANALYTICS_CLEANUP_CRON:0 0 7 ? * * *}
+      retryNumber: ${CONDITIONAL_ANALYTICS_CLEANUP_RETRY_NUM:1}
+      retryDelay: ${CONDITIONAL_ANALYTICS_CLEANUP_RETRY_DELAY:60}
+      enabled: ${CONDITIONAL_ANALYTICS_CLEANUP_ENABLED:false}
+      timeout: ${CONDITIONAL_ANALYTICS_CLEANUP_TIMEOUT_MIN:1}
+    analyticsStaleDataCleanup:
+      cron: ${ANALYTICS_STALE_DATA_CLEANUP_CRON:0/30 * * ? * * *}
+      retryNumber: ${ANALYTICS_STALE_DATA_CLEANUP_RETRY_NUM:1}
+      retryDelay: ${ANALYTICS_STALE_DATA_CLEANUP_RETRY_DELAY:60}
+      enabled: ${ANALYTICS_STALE_DATA_CLEANUP_ENABLED:false}
+      timeout: ${ANALYTICS_STALE_DATA_CLEANUP_TIMEOUT_MIN:1}
