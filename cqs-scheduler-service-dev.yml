@@ -14,7 +14,7 @@ server:
     client-auth: need
 
 user:
-  username: Github
+  username: GITHUB
 
 car:
   brand: AUDI
