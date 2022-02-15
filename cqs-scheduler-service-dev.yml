@@ -16,8 +16,6 @@ server:
 user:
   username: GITHUB-Test
 
-car:
-  brand: AUDI
 mtls:
   #if enabling do not forget to change external service urls to https
   certificateMountLocation: ${CERTIFICATE_MOUNT_LOCATION:autocert}
